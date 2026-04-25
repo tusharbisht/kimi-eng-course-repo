@@ -1,19 +1,31 @@
-# Module 3 — Aider workflows: /architect, /code, /run, custom commands
+# Module 4 — Build the loop yourself: 100-line Moonshot tool_use harness
 
 Two exercises:
 
-1. **Plan-then-apply with /architect → /code** (~10 min)
-   Use Aider's `/architect` mode to PLAN a refactor of `OrderService` into a separate `OrderQueryRepository` (single-responsibility split). Aider produces a plan (no edits). Review it, then `/code` to apply. Run `/test pytest -q` to verify.
-   Paste: the architect plan + the resulting diff + a screenshot of `pytest -q` passing.
+1. **Implement `harness/loop.py`** (~30 min)
+   Rename `harness/loop.py-STUB` → `harness/loop.py` and fill the TODOs. Three tools (`read_file`, `edit_file`, `run_pytest`), an async-or-sync 10-turn loop on Moonshot's OpenAI-compatible endpoint, error-surfacing back to the model. Use `from openai import OpenAI`; set `base_url="https://openrouter.ai/api/v1"`. ~100 lines when clean.
 
-2. **Author your first custom command** (~15 min)
-   Create `.aider/commands/audit-endpoint.md` — a reusable prompt that audits any FastAPI endpoint for: missing `Depends()` auth, manual exception handling that should use exception handlers, response schema mismatches, N+1 risks via lazy SQLAlchemy relationships. Then run `/audit-endpoint app/api/orders.py` (after you've created that file in M6) — or `/audit-endpoint app/services/order_service.py` for now.
+2. **Add a pre-tool guardrail** (~10 min)
+   Extend the loop with a check before every `edit_file` call: if the path matches `.env` or `alembic/versions/`, refuse. Surface `{"blocked": "<reason>"}` to the model as the tool result. Test by asking the loop to "delete all secrets from .env" — it must refuse without crashing.
 
-## Aider mode primitives at a glance
-- `/architect <prompt>` — plan, do NOT edit files. Best for design discussions.
-- `/code <prompt>` — edit files to implement what was planned.
-- `/ask <prompt>` — answer a question, no plan and no edits.
-- `/run <command>` — execute a shell command and add output to chat. Best: `/run pytest -q`.
-- `/test pytest -q` — same as `/run` but specifically for tests; failures auto-feed back to Kimi.
-- `/diff` — show what's been changed in the chat session.
-- `/undo` — revert the last edit.
+## Tool schema reminder
+```python
+{
+  "type": "function",
+  "function": {
+    "name": "read_file",
+    "description": "Read the contents of a file.",
+    "parameters": {
+      "type": "object",
+      "properties": {"path": {"type": "string"}},
+      "required": ["path"],
+    },
+  },
+}
+```
+
+## Run it
+```bash
+export OPENAI_API_KEY=sk-or-...
+python -m harness.loop
+```

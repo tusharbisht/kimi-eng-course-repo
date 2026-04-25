@@ -1,0 +1,70 @@
+"""Module 4 — implement this loop.
+
+A minimal agentic-coding harness that calls Moonshot's Kimi K2 directly
+via the OpenAI-compatible endpoint, dispatches three tools, and feeds
+results back. ~100 lines when done.
+
+Tools to expose:
+  - read_file(path: str) -> str
+  - edit_file(path: str, search: str, replace: str) -> dict[str, int]  # returns {"matches": N}
+  - run_pytest(args: str = "-q") -> dict[str, str | int]                 # returns {"stdout": ..., "rc": int}
+
+Loop must:
+  - Send system prompt + user prompt + tools schema to Moonshot.
+  - Inspect response.choices[0].message.tool_calls; if any, dispatch + feed back.
+  - Terminate when response has no tool_calls (model said its piece) OR a
+    10-turn budget is exhausted (raise BudgetExceeded then).
+  - Surface tool errors back to the model as tool_result content; never crash.
+
+Pre-tool guardrail (added in S2):
+  - Refuse edit_file if path matches a protected glob (.env, alembic/versions/*).
+  - Print a "blocked: <reason>" line and skip dispatch — feed `{"blocked": "..."}` as the tool_result.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from pathlib import Path
+from typing import Any
+
+from openai import OpenAI
+
+# TODO: define TOOLS as a list[dict] with the OpenAI tool schema:
+#   {"type": "function", "function": {"name": ..., "description": ..., "parameters": {...}}}
+TOOLS: list[dict[str, Any]] = [
+    # TODO: read_file
+    # TODO: edit_file
+    # TODO: run_pytest
+]
+
+PROTECTED_GLOBS = (".env", "alembic/versions/")
+
+
+def _read_file(path: str) -> str:
+    # TODO: implement
+    raise NotImplementedError
+
+
+def _edit_file(path: str, search: str, replace: str) -> dict[str, int]:
+    # TODO: implement (block if path starts with any PROTECTED_GLOBS)
+    raise NotImplementedError
+
+
+def _run_pytest(args: str = "-q") -> dict[str, Any]:
+    # TODO: implement (use subprocess.run, capture stdout, return rc)
+    raise NotImplementedError
+
+
+class BudgetExceeded(RuntimeError):
+    pass
+
+
+def run_loop(user_prompt: str, *, model: str = "openai/moonshotai/kimi-k2-0905",
+             max_turns: int = 10) -> str:
+    # TODO: implement the multi-turn loop. Return the final assistant message.
+    raise NotImplementedError
+
+
+if __name__ == "__main__":
+    print(run_loop("Find and fix the N+1 bug in app/services/order_service.py"))
