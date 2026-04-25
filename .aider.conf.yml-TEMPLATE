@@ -1,0 +1,22 @@
+# .aider.conf.yml — TEMPLATE FOR YOU TO COPY TO .aider.conf.yml
+
+# Default model: pin Kimi K2 0905 for reproducibility through M5.
+# In M6 capstone, swap to kimi-k2-latest if you want the freshest snapshot.
+model: openai/moonshotai/kimi-k2-0905
+
+# Provider endpoint — OpenRouter (free tier, recommended for course)
+openai-api-base: https://openrouter.ai/api/v1
+
+# Auto-load AGENTS.md every session — this is what closes the context gap
+read:
+  - AGENTS.md
+
+# Don't auto-commit; keep your git history clean. Manually commit when you ship.
+auto-commits: false
+dirty-commits: false
+
+# Don't include lockfiles or generated bindings in chat — saves tokens
+add-gitignore-files: false
+
+# Reasonable map size for the FastAPI repo
+map-tokens: 1024

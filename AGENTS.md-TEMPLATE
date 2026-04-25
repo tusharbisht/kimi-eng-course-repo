@@ -1,0 +1,44 @@
+# AGENTS.md — TEMPLATE FOR YOU TO AUTHOR
+
+This is the file Aider auto-loads as repo context (when configured via .aider.conf.yml). Rename to `AGENTS.md` and fill every section.
+
+## Stack
+<!-- Python 3.11, FastAPI 0.115, SQLAlchemy 2.0 — use select() ALWAYS, never 1.x query()
+     asyncpg / aiosqlite for async drivers; pytest 8.x + pytest-asyncio 0.25 + Testcontainers 4.10 for integration tests
+     ruff (line 100, ruff.lint.select=[E,F,I,B,UP,ASYNC]); mypy strict; uv preferred over pip -->
+
+## Conventions
+<!-- snake_case modules + functions; PascalCase classes
+     mandatory `from __future__ import annotations` at top of every .py file
+     type hints required on every function signature
+     async-first: all I/O functions are `async def`
+     constructor injection via dataclass / explicit __init__ — NEVER global state
+     prefer `httpx.AsyncClient` over `requests` -->
+
+## Testing
+<!-- pytest 8 + pytest-asyncio (asyncio_mode=auto). NEVER unittest.TestCase.
+     Mocks: pytest-mock + AsyncMock — NEVER MagicMock for async paths.
+     Integration tests use Testcontainers + real Postgres (NOT in-memory SQLite).
+     Coverage target: ≥85% via `pytest --cov=app --cov-fail-under=85`. -->
+
+## Don't-Touch
+<!-- Files Kimi (or any agent) must never edit:
+     - alembic/versions/*.py — never modify in place; ADD a new revision
+     - .env, .env.example for secrets
+     - pyproject.toml major version bumps without explicit approval
+     - any file whose first line is `# DO-NOT-EDIT` -->
+
+## Commands
+<!-- Full suite:        pytest -q --cov=app --cov-fail-under=85
+     Lint:              ruff check .
+     Type-check:        mypy app/
+     Format:            ruff format .
+     Run locally:       uvicorn app.main:app --reload -->
+
+## Escalation
+<!-- When should Kimi STOP and ask a human?
+     - Schema changes (new alembic revision, altered column type)
+     - Any change to security boundaries (auth handlers, secrets handling)
+     - Any new dependency added to pyproject.toml
+     - Removing a test without replacing it
+     - Changes to the FastAPI app object's startup sequence -->

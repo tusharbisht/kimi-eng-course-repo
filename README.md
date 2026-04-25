@@ -1,24 +1,23 @@
-# Module 1 — Feel the Pain: Aider+Kimi WITHOUT context
+# Module 2 — AGENTS.md + .aider.conf.yml: teach Kimi your repo
 
-You're working in `app/services/order_service.py`. Your team uses `OrderService.get_recent_orders()` on the customer dashboard. Streamflow's SRE team flagged it for slow response times — every call triggers ~21 database queries for 20 orders.
+Your task: author the project's `AGENTS.md` (rename `AGENTS.md-TEMPLATE` and fill every section) and `.aider.conf.yml` (rename `.aider.conf.yml-TEMPLATE` and verify the model + base + read settings).
 
-**Your task** (~20 min):
-1. Start Aider against this branch:
-   ```
-   export OPENAI_API_KEY=sk-or-...   # OpenRouter free tier
-   aider --model openai/moonshotai/kimi-k2-0905 \
-     --openai-api-base https://openrouter.ai/api/v1
-   ```
-2. Add the file: `/add app/services/order_service.py`
-3. Ask Kimi to find + fix the bug. Use `/architect` first if you want, then `/code`.
-4. **DO NOT** author `AGENTS.md` yet — you'll do that in Module 2.
-5. Paste back: (a) the prompt you used, (b) the diff Aider produced, (c) any edits you had to make by hand because Kimi didn't know your team's conventions.
+Then **retry Module 1's N+1 fix** in a fresh aider session — same prompt, same starter, but now with AGENTS.md in the chat. Watch Kimi reach for `selectinload(Order.customer)` AND pytest-asyncio fixtures because your AGENTS.md said so.
 
-What you'll observe: without context, Kimi may use SQLAlchemy 1.x `query()` syntax (your team uses 2.0 `select()`), suggest unittest instead of pytest, or import sync APIs into your async code path. Whatever it gets wrong is what you'll add to `AGENTS.md` in M2.
+Required AGENTS.md sections (all six):
+- Stack (versions pinned)
+- Conventions (naming + imports + async + type hints)
+- Testing (framework + mocking + integration backbone)
+- Don't-Touch (files Kimi must never edit)
+- Commands (pytest, ruff, mypy, uvicorn)
+- Escalation (when to stop + ask a human)
 
-## Verify locally before/after the fix
+## Reset between attempts
 ```bash
-uv pip install -e ".[dev]"
-pytest -q                        # Smoke test should pass
-ruff check . && mypy app/        # Should also pass
+# In aider:
+/clear           # forget previous context
+/drop            # remove all files
+/add AGENTS.md   # add the new context
+/add app/services/order_service.py   # add the file you'll edit
 ```
+Then retry your M1 prompt.
