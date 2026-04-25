@@ -1,34 +1,44 @@
-# Module 5 — Consume the team-tickets MCP from Python
+# Module 6 — Capstone: Ship POST /orders via GitHub Actions
 
-Kimi K2 doesn't natively speak MCP — but you have a pre-built MCP server (`tusharbisht/aie-team-tickets-mcp`, written in Node) that exposes your team's ticket data. Bridge the gap with a Python adapter.
+**Goal:** ship a production-grade `POST /orders` endpoint that passes:
+- Pydantic v2 input validation
+- Idempotency-Key handling (201 / 200 / 409)
+- Testcontainers-backed integration tests (NOT SQLite)
+- `pytest --cov-fail-under=80` + ruff + mypy strict
+- GHA `lab-grade.yml` runs all of the above on every push
 
-## Setup
-```bash
-# Clone + run the MCP server
-cd /tmp
-git clone https://github.com/tusharbisht/aie-team-tickets-mcp
-cd aie-team-tickets-mcp
-npm install
-# leave it; harness/mcp_adapter.py spawns it as a subprocess
+## Flow
+1. Fork this repo on your own GitHub.
+2. `git checkout module-6-capstone && uv pip install -e ".[dev]" && pytest -q` — starter tests fail on purpose (`test_capstone_is_unfinished`).
+3. Use Aider+Kimi to implement:
+   - `app/api/orders.py::create_order` (idempotency + persistence)
+   - `app/db/idempotency.py` (model + repository for the idempotency_keys table)
+   - `tests/api/test_orders.py` (4 integration scenarios above)
+   For the capstone, pin to `kimi-k2-latest` if you want the freshest snapshot:
+   ```
+   aider --model openai/moonshotai/kimi-k2-latest \
+     --openai-api-base https://openrouter.ai/api/v1
+   ```
+4. `git commit -am "capstone: POST /orders with idempotency"` and `git push origin module-6-capstone` (or any branch).
+5. GHA runs `lab-grade.yml` automatically. Watch the Actions tab on YOUR fork.
+6. Paste the run URL (`https://github.com/<your-fork>/actions/runs/<id>`) into the course's capstone submit textarea.
 
-# Back in the course repo
-cd /tmp/kimi-assets/kimi-eng-course-repo
+## Idempotency contract
+- Client sends `Idempotency-Key: <uuid>` on every request.
+- Same key + same body (within 24h) → 200 + original OrderResponse body.
+- Same key + different body → 409 Conflict.
+- Key not seen → persist order + key atomically → 201.
+
+Postgres schema:
+```sql
+CREATE TABLE idempotency_keys (
+    key TEXT PRIMARY KEY,
+    request_hash TEXT NOT NULL,
+    response_body JSONB,
+    status_code INT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 ```
 
-## Two exercises
-
-1. **Implement `harness/mcp_adapter.py`** (~25 min)
-   Rename `mcp_adapter.py-STUB` → `mcp_adapter.py` and fill the TODOs. Real JSON-RPC: spawn the server, `initialize`, `tools/list`, translate MCP shape to OpenAI tool_call shape, expose `call_tool(name, args)`.
-
-2. **Use it from your M4 harness loop** (~15 min)
-   Modify `harness/loop.py` to also include the MCP-bridged tools. Ask Kimi: "Find recent tickets tagged `payments-api` and tell me which one I should pick up next." Watch Kimi call `list_recent_tickets` via your adapter.
-
-## MCP JSON-RPC reference
-```jsonl
-// Send:    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {...}}
-// Receive: {"jsonrpc": "2.0", "id": 1, "result": {...}}
-// Send:    {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}
-// Receive: {"jsonrpc": "2.0", "id": 2, "result": {"tools": [...]}}
-// Send:    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "list_recent_tickets", "arguments": {}}}
-// Receive: {"jsonrpc": "2.0", "id": 3, "result": {"content": [...]}}
-```
+## Pass = GHA conclusion `success`
+The course's grader polls the run URL you paste; the `grade` job must complete successfully.

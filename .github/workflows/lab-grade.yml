@@ -1,0 +1,58 @@
+name: lab-grade
+on:
+  push:
+    branches: [ 'module-6-capstone', 'capstone-*', 'submit/*', 'learner/*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  grade:
+    name: grade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: test
+          POSTGRES_DB: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install uv
+        run: pip install --upgrade pip uv
+
+      - name: Install project + dev deps
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Lint with ruff
+        run: ruff check .
+
+      - name: Type-check with mypy
+        run: mypy app/
+
+      - name: Run pytest with coverage gate (≥ 80%)
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+        run: pytest -q --strict-markers --cov=app --cov-fail-under=80
+
+      - name: Upload coverage on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
