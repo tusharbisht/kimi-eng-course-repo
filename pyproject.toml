@@ -1,0 +1,45 @@
+[project]
+name = "kimi-eng-course"
+version = "0.0.1"
+description = "Open-Source AI Coding course — Kimi K2 + Aider on a real Python repo"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "sqlalchemy==2.0.36",
+    "asyncpg==0.30.0",
+    "pydantic==2.10.4",
+    "httpx==0.28.1",
+    "aiosqlite==0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "pytest-cov==6.0.0",
+    "testcontainers==4.10.0",
+    "ruff==0.9.0",
+    "mypy==1.14.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = ["integration: marks tests as integration (deselect with '-m \"not integration\"')"]
