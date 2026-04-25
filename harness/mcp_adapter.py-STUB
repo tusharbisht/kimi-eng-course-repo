@@ -1,0 +1,73 @@
+"""Module 5 — implement an MCP stdio adapter.
+
+Spawns a Node MCP server as a subprocess (stdin/stdout JSON-RPC) and
+exposes its tools as OpenAI-compatible tool_call definitions Moonshot
+can dispatch directly via your harness/loop.py from Module 4.
+
+The MCP we consume: tusharbisht/aie-team-tickets-mcp
+  Tools: list_recent_tickets, get_ticket_health
+  Transport: stdio JSON-RPC
+
+Real shape (~80 lines when done):
+  1. spawn the server with subprocess.Popen
+  2. send "initialize" request → wait for response
+  3. send "tools/list" → record tool schemas
+  4. translate to OpenAI tool_call format
+  5. on tool dispatch from loop.py, send "tools/call" → return result
+  6. surface stderr to logger; never crash on adapter errors
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from pathlib import Path
+from typing import Any
+
+# JSON-RPC request id counter — increment for every request
+_NEXT_ID = 1
+
+
+def _next_id() -> int:
+    global _NEXT_ID
+    _NEXT_ID += 1
+    return _NEXT_ID
+
+
+class MCPAdapter:
+    """Adapter for stdio MCP servers.
+
+    Usage:
+        with MCPAdapter("path/to/aie-team-tickets-mcp/server.js") as mcp:
+            tools = mcp.list_tools()  # OpenAI-compatible schema
+            result = mcp.call_tool("list_recent_tickets", {"limit": 5})
+    """
+
+    def __init__(self, server_path: str | Path) -> None:
+        self.server_path = str(server_path)
+        self._proc: subprocess.Popen | None = None
+
+    def __enter__(self) -> MCPAdapter:
+        # TODO: spawn the server with stdin/stdout pipes, send "initialize" request,
+        # wait for the response. Raise if it doesn't initialize within a few seconds.
+        raise NotImplementedError
+
+    def __exit__(self, *exc: Any) -> None:
+        if self._proc is not None:
+            self._proc.terminate()
+            self._proc.wait(timeout=5)
+
+    def _send(self, method: str, params: dict | None = None) -> dict:
+        # TODO: write JSON-RPC request to stdin, read the matching response from stdout
+        raise NotImplementedError
+
+    def list_tools(self) -> list[dict]:
+        # TODO: send "tools/list", convert MCP tool schema to OpenAI tool_call shape:
+        #   MCP shape:    {"name": ..., "description": ..., "inputSchema": {...}}
+        #   OpenAI shape: {"type": "function", "function": {"name": ..., "description": ..., "parameters": {...}}}
+        raise NotImplementedError
+
+    def call_tool(self, name: str, args: dict) -> str:
+        # TODO: send "tools/call" with {"name": ..., "arguments": ...}, return the
+        # result content as a JSON string suitable to feed back into the OpenAI loop
+        raise NotImplementedError

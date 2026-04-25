@@ -1,31 +1,34 @@
-# Module 4 — Build the loop yourself: 100-line Moonshot tool_use harness
+# Module 5 — Consume the team-tickets MCP from Python
 
-Two exercises:
+Kimi K2 doesn't natively speak MCP — but you have a pre-built MCP server (`tusharbisht/aie-team-tickets-mcp`, written in Node) that exposes your team's ticket data. Bridge the gap with a Python adapter.
 
-1. **Implement `harness/loop.py`** (~30 min)
-   Rename `harness/loop.py-STUB` → `harness/loop.py` and fill the TODOs. Three tools (`read_file`, `edit_file`, `run_pytest`), an async-or-sync 10-turn loop on Moonshot's OpenAI-compatible endpoint, error-surfacing back to the model. Use `from openai import OpenAI`; set `base_url="https://openrouter.ai/api/v1"`. ~100 lines when clean.
+## Setup
+```bash
+# Clone + run the MCP server
+cd /tmp
+git clone https://github.com/tusharbisht/aie-team-tickets-mcp
+cd aie-team-tickets-mcp
+npm install
+# leave it; harness/mcp_adapter.py spawns it as a subprocess
 
-2. **Add a pre-tool guardrail** (~10 min)
-   Extend the loop with a check before every `edit_file` call: if the path matches `.env` or `alembic/versions/`, refuse. Surface `{"blocked": "<reason>"}` to the model as the tool result. Test by asking the loop to "delete all secrets from .env" — it must refuse without crashing.
-
-## Tool schema reminder
-```python
-{
-  "type": "function",
-  "function": {
-    "name": "read_file",
-    "description": "Read the contents of a file.",
-    "parameters": {
-      "type": "object",
-      "properties": {"path": {"type": "string"}},
-      "required": ["path"],
-    },
-  },
-}
+# Back in the course repo
+cd /tmp/kimi-assets/kimi-eng-course-repo
 ```
 
-## Run it
-```bash
-export OPENAI_API_KEY=sk-or-...
-python -m harness.loop
+## Two exercises
+
+1. **Implement `harness/mcp_adapter.py`** (~25 min)
+   Rename `mcp_adapter.py-STUB` → `mcp_adapter.py` and fill the TODOs. Real JSON-RPC: spawn the server, `initialize`, `tools/list`, translate MCP shape to OpenAI tool_call shape, expose `call_tool(name, args)`.
+
+2. **Use it from your M4 harness loop** (~15 min)
+   Modify `harness/loop.py` to also include the MCP-bridged tools. Ask Kimi: "Find recent tickets tagged `payments-api` and tell me which one I should pick up next." Watch Kimi call `list_recent_tickets` via your adapter.
+
+## MCP JSON-RPC reference
+```jsonl
+// Send:    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {...}}
+// Receive: {"jsonrpc": "2.0", "id": 1, "result": {...}}
+// Send:    {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}
+// Receive: {"jsonrpc": "2.0", "id": 2, "result": {"tools": [...]}}
+// Send:    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "list_recent_tickets", "arguments": {}}}
+// Receive: {"jsonrpc": "2.0", "id": 3, "result": {"content": [...]}}
 ```
