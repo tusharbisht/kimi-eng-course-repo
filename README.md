@@ -1,23 +1,19 @@
-# Module 2 — AGENTS.md + .aider.conf.yml: teach Kimi your repo
+# Module 3 — Aider workflows: /architect, /code, /run, custom commands
 
-Your task: author the project's `AGENTS.md` (rename `AGENTS.md-TEMPLATE` and fill every section) and `.aider.conf.yml` (rename `.aider.conf.yml-TEMPLATE` and verify the model + base + read settings).
+Two exercises:
 
-Then **retry Module 1's N+1 fix** in a fresh aider session — same prompt, same starter, but now with AGENTS.md in the chat. Watch Kimi reach for `selectinload(Order.customer)` AND pytest-asyncio fixtures because your AGENTS.md said so.
+1. **Plan-then-apply with /architect → /code** (~10 min)
+   Use Aider's `/architect` mode to PLAN a refactor of `OrderService` into a separate `OrderQueryRepository` (single-responsibility split). Aider produces a plan (no edits). Review it, then `/code` to apply. Run `/test pytest -q` to verify.
+   Paste: the architect plan + the resulting diff + a screenshot of `pytest -q` passing.
 
-Required AGENTS.md sections (all six):
-- Stack (versions pinned)
-- Conventions (naming + imports + async + type hints)
-- Testing (framework + mocking + integration backbone)
-- Don't-Touch (files Kimi must never edit)
-- Commands (pytest, ruff, mypy, uvicorn)
-- Escalation (when to stop + ask a human)
+2. **Author your first custom command** (~15 min)
+   Create `.aider/commands/audit-endpoint.md` — a reusable prompt that audits any FastAPI endpoint for: missing `Depends()` auth, manual exception handling that should use exception handlers, response schema mismatches, N+1 risks via lazy SQLAlchemy relationships. Then run `/audit-endpoint app/api/orders.py` (after you've created that file in M6) — or `/audit-endpoint app/services/order_service.py` for now.
 
-## Reset between attempts
-```bash
-# In aider:
-/clear           # forget previous context
-/drop            # remove all files
-/add AGENTS.md   # add the new context
-/add app/services/order_service.py   # add the file you'll edit
-```
-Then retry your M1 prompt.
+## Aider mode primitives at a glance
+- `/architect <prompt>` — plan, do NOT edit files. Best for design discussions.
+- `/code <prompt>` — edit files to implement what was planned.
+- `/ask <prompt>` — answer a question, no plan and no edits.
+- `/run <command>` — execute a shell command and add output to chat. Best: `/run pytest -q`.
+- `/test pytest -q` — same as `/run` but specifically for tests; failures auto-feed back to Kimi.
+- `/diff` — show what's been changed in the chat session.
+- `/undo` — revert the last edit.

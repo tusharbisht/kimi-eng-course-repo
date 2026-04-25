@@ -1,0 +1,12 @@
+# Add custom Aider commands here. Each is a .md file whose contents are the
+# prompt Aider runs when the user types /<filename> at the aider prompt.
+#
+# Module 3 task: author `audit-endpoint.md` with the spec from your course
+# step. Format:
+#
+#   # Audit a FastAPI endpoint for production readiness
+#   You will audit the endpoint at: $1
+#   Check for: 1. missing Depends() auth, 2. manual exception handling
+#   that should use exception_handlers, 3. response schema mismatches,
+#   4. N+1 risks via lazy SQLAlchemy relationships.
+#   Be concise. Cite line numbers.
